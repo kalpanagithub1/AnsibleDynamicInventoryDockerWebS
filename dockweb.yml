@@ -1,0 +1,13 @@
+---
+ - hosts: docker
+   tasks:
+           - name: Installation of httpd
+             package: 
+                  name: httpd
+                  state: present
+           - name: HTML file inside document root
+             copy: 
+                  content: "<center>Web Configuration on Docker is <b>successful</b></center>"
+                  dest: "/var/www/html/index.html"    
+           - name: Starting the httpd services
+             command: /usr/sbin/httpd

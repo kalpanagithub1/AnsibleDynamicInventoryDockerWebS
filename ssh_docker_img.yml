@@ -1,0 +1,17 @@
+--- 
+ - hosts: localhost
+   tasks: 
+       - name: Creating WorkSpace
+         ansible.builtin.file:
+                 path: /root/doc_ssh_img
+                 state: directory
+       - name: Creating file for configuration
+         copy: 
+                 dest: /root/doc_ssh_img/sshd_config
+                 content: "port 22\nprotocol 2\nHostKey /etc/ssh/ssh_host_rsa_key\nHostKey /etc/ssh/ssh_host_dsa_key\nHostKey /etc/ssh/ssh_host_ecdsa_key\nHostKey /etc/ssh/ssh_host_ed25519_key\n\nLoginGraceTime 120\nPermitRootLogin yes\nStrictModes yes\n\nPubkeyAuthentication yes\nUsePAM yes\n"
+       - name: Creating Dockerfile
+         copy:
+                 dest: /root/doc_ssh_img/Dockerfile
+                 content: " FROM centos:latest\n RUN yum -y update\n RUN yum install -y openssh-server\n RUN ssh-keygen -A\n ADD ./sshd_config /etc/ssh/sshd_config\n RUN echo root:root | chpasswd\n CMD /usr/sbin/sshd -D\n"
+       - name: Building image
+         command: docker build -t centos_ssh1  /root/doc_ssh_img

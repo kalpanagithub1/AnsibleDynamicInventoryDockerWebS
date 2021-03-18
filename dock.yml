@@ -1,0 +1,56 @@
+--- 
+ - hosts: localhost
+   vars_prompt:
+           - name: cont_name
+             prompt: "Enter container name"
+             private: no
+           - name: port_no
+             prompt: "Enter port no at which you want to expose the container"
+             private: no
+   tasks:
+           - name: installation of docker sdk
+             block: 
+               - command: pip3 show docker-py
+             rescue:
+               - pip:
+                       name: docker-py
+           - name: Start Docker Services
+             service:
+                     name: "docker"
+                     state: started
+                     enabled: yes
+             register: a
+           - debug:
+                 var: a.state
+
+           - name: Put Selinux Permissive
+             ansible.posix.selinux:
+                     policy: targeted
+                     state: permissive
+             register: b
+           - debug:
+                 var: b.state
+           - name: Launch docker container
+             command: docker run -itd --name {{cont_name}} -p {{port_no}}:80 centos_ssh1
+             register: c
+           - debug: 
+                var: c
+           - name: Retreiving ip of running container
+             shell: docker inspect --format '{''{ .NetworkSettings.IPAddress }''}' {{cont_name}}
+             register: Container_ID
+           - debug:
+                   var: Container_ID.stdout
+
+           - name: Update Inventory File
+             blockinfile:
+                     path: /root/ip.txt
+                     block: |
+                            [docker]
+                            {{Container_ID.stdout}} ansible_ssh_user=root ansible_ssh_pass=root ansible_connection=ssh
+
+             register: g
+           - debug:
+                    var: g.msg
+                            
+
+                   
